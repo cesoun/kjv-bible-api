@@ -4,6 +4,30 @@ This is a project for CST-235. I really didn't want to do this in Java, so I did
 
 I'm fairly confident the text is parsed properly to json but if it isn't then just shoot a PR in or something. Hopefully nothing is missing though.
 
+## Data Format
+
+```json
+{
+	"titles": [
+		{
+			"title": string,
+			"alt": string
+		}
+	],
+	"books": [
+		{
+			"title": string,
+			"alt": string,
+			"chapters": {
+				"chapter#": {
+					"verse#": string
+				}
+			}
+		}
+	]
+}
+```
+
 ## Legal Stuff?
 
 The raw utf-8 content for the King James Bible (kjv/kjb) was acquired from [The Project Gutenberg eBook of The King James Bible](https://www.gutenberg.org/files/10/10-0.txt). This can be seen within the files named `kjv-new.[txt/json]` and `kjv-old.[txt/json]` which have been modified for parsing.

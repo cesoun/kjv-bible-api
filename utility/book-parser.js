@@ -2,107 +2,99 @@ const fs = require('fs');
 const path = require('path');
 
 function getRawText(fileName) {
-	return fs.readFileSync(path.join(__dirname, fileName + '.txt'), 'utf8');
+	// File contents.
+	let raw = fs.readFileSync(path.join(__dirname, fileName + '.txt'), 'utf8');
+
+	// Otherwise/Commonly Called: replacement.
+	raw = raw.replace(/(\n.*Called:\n{2,}.*)/g, '');
+
+	// Condensing lines downs nicely.
+	raw = raw.replace(/\n{3,}/g, '\n');
+	raw = raw.replace(/\n{2,}/g, '\n');
+
+	// Replace double spaces. Idk why these are in here.
+	raw = raw.replace(/ {2,}/g, ' ');
+
+	// Titles for parsing.
+	let titles = JSON.parse(
+		fs.readFileSync(path.join(__dirname, fileName + '-titles.json'), 'utf8')
+	);
+
+	return [raw, titles];
 }
 
 function getRawArray(rawData) {
-	return rawData.split('\n\n\n');
+	return rawData.split('\n');
 }
 
-function getRawBooks(rawArr) {
+function collapseLines(rawArr, titles) {
 	let books = {};
-	for (let i = 0; i < rawArr.length / 2; i += 2) {
-		books[rawArr[i].replace('\n\n', '')] = rawArr[i + 1];
+	let curBook = null;
+
+	// Loop through our input.
+	for (const line of rawArr) {
+		// When we hit a title, set the curBook to this line & continue.
+		for (const t of titles) {
+			if (t.title.includes(line)) {
+				curBook = line;
+				continue;
+			}
+		}
+
+		// If the object has no content, set it, otherwise append it.
+		if (!books[curBook]) {
+			books[curBook] = line;
+		} else {
+			books[curBook] += ` ${line}`;
+		}
 	}
 
 	return books;
 }
 
-function parseChaptersAndVerses(rawBooks) {
+function parseChaptersAndVerses(rawBooks, titles) {
 	let output = {
 		books: [],
 	};
 
 	// Create the book in each loop.
-	for (const [k, v] of Object.entries(rawBooks)) {
+	for (const [title, content] of Object.entries(rawBooks)) {
+		let t = titles.find((t) => t.title === title);
+
 		// Setup a starter object.
 		let book = {
-			title: k,
-			// altTitle: '',
+			...t,
 			chapters: {},
 		};
 
-		// Get the chapter contents & split it out.
-		let contents = v.split('\n\n');
+		// Grab all sub-verses.
+		exp = /((\d+):(\d+))/g;
+		let found = content.match(exp);
 
-		// Loop through it.
-		for (let index in contents) {
-			// hold the content
-			let c = contents[index];
+		for (let i = 0; i < found.length; i++) {
+			let [chap, verse] = found[i].split(':');
+			let left = content.indexOf(found[i]);
+			let v;
 
-			// Repalce all newlines.
-			let exp = /\n/g;
-			c = c.replace(exp, ' ');
+			// If we have another sub-verse, get substring. Otherwise to end of string.
+			if (i + 1 < found.length) {
+				let right = content.indexOf(found[i + 1]);
 
-			// Grab all potential sub-verses.
-			exp = /((\d+):(\d+))/g;
-			let found = c.match(exp);
-
-			// Hanging lines, these are likely apart of the previous verse.
-			if (!found) {
-				// Append the content to the previous line.
-				let prev = contents[index - 1];
-				prev += ` ${c}`;
-
-				contents[index - 1] = prev;
-
-				// Remove it and continue.
-				delete contents[index];
-				continue;
-			}
-
-			// non-hanging, we need to insert them into the chapter:verse
-			if (found.length > 1) {
-				// move index ahead 1 & insert after current node.
-				for (let i = 0; i < found.length; i++) {
-					let [chap, verse] = found[i].split(':');
-					let left = c.indexOf(found[i]);
-					let v;
-
-					// If we have another sub-verse, get substring. Otherwise to end of string.
-					if (i + 1 < found.length) {
-						let right = c.indexOf(found[i + 1]);
-
-						v = c.substring(left + found[i].length, right);
-					} else {
-						v = c.substring(left + found[i].length);
-					}
-
-					// Append the verse to chapter.
-					chapter = book.chapters[chap];
-
-					if (!chapter) {
-						chapter = {};
-					}
-
-					// Trim whitespace.
-					chapter[verse] = v.trim();
-					book.chapters[chap] = chapter;
-				}
+				v = content.substring(left + found[i].length, right);
 			} else {
-				// Append the verse to the chapter.
-				let [chap, verse] = found[0].split(':');
-
-				chapter = book.chapters[chap];
-
-				if (!chapter) {
-					chapter = {};
-				}
-
-				// Remove the ##:## (chapter:verse) from the string and trim whitespace.
-				chapter[verse] = c.replace(exp, '').trim();
-				book.chapters[chap] = chapter;
+				v = content.substring(left + found[i].length);
 			}
+
+			// Append the verse to chapter.
+			chapter = book.chapters[chap];
+
+			if (!chapter) {
+				chapter = {};
+			}
+
+			// Trim whitespace.
+			chapter[verse] = v.trim();
+			book.chapters[chap] = chapter;
 		}
 
 		// Push the book in.
@@ -112,8 +104,8 @@ function parseChaptersAndVerses(rawBooks) {
 	return output;
 }
 
-function writeJSON(obj, file, min = false) {
-	let json = JSON.stringify(obj, null, min ? 0 : 4);
+function writeJSON(obj, titles, file, min = false) {
+	let json = JSON.stringify({ titles, ...obj }, null, min ? 0 : 4);
 	let filename = min ? `${file}-min.json` : `${file}.json`;
 
 	fs.writeFileSync(path.join(__dirname, '../data', `${filename}`), json);
@@ -122,13 +114,13 @@ function writeJSON(obj, file, min = false) {
 
 function parseBooks(files) {
 	for (const file of files) {
-		let raw = getRawText(file);
+		let [raw, titles] = getRawText(file);
 		let rawArr = getRawArray(raw);
-		let rawBooks = getRawBooks(rawArr);
-		let output = parseChaptersAndVerses(rawBooks);
+		let rawBooks = collapseLines(rawArr, titles);
+		let output = parseChaptersAndVerses(rawBooks, titles);
 
-		// Add ", true" to get a minified file.
-		writeJSON(output, file);
+		writeJSON(output, titles, file);
+		writeJSON(output, titles, file, true);
 	}
 
 	console.log('Complete.');

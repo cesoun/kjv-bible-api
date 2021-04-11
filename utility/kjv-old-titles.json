@@ -1,0 +1,158 @@
+[
+	{
+		"title": "The First Book of Moses: Called Genesis",
+		"alt": "Genesis"
+	},
+	{
+		"title": "The Second Book of Moses: Called Exodus",
+		"alt": "Exodus"
+	},
+	{
+		"title": "The Third Book of Moses: Called Leviticus",
+		"alt": "Leviticus"
+	},
+	{
+		"title": "The Fourth Book of Moses: Called Numbers",
+		"alt": "Numbers"
+	},
+	{
+		"title": "The Fifth Book of Moses: Called Deuteronomy",
+		"alt": "Deuteronomy"
+	},
+	{
+		"title": "The Book of Joshua",
+		"alt": "Joshua"
+	},
+	{
+		"title": "The Book of Judges",
+		"alt": "Judges"
+	},
+	{
+		"title": "The Book of Ruth",
+		"alt": "Ruth"
+	},
+	{
+		"title": "The First Book of Samuel",
+		"alt": "1 Samuel"
+	},
+	{
+		"title": "The Second Book of Samuel",
+		"alt": "2 Samuel"
+	},
+	{
+		"title": "The First Book of the Kings",
+		"alt": "1 Kings"
+	},
+	{
+		"title": "The Second Book of the Kings",
+		"alt": "2 Kings"
+	},
+	{
+		"title": "The First Book of the Chronicles",
+		"alt": "1 Chronicles"
+	},
+	{
+		"title": "The Second Book of the Chronicles",
+		"alt": "2 Chronicles"
+	},
+	{
+		"title": "Ezra",
+		"alt": "Ezra"
+	},
+	{
+		"title": "The Book of Nehemiah",
+		"alt": "Nehemiah"
+	},
+	{
+		"title": "The Book of Esther",
+		"alt": "Esther"
+	},
+	{
+		"title": "The Book of Job",
+		"alt": "Job"
+	},
+	{
+		"title": "The Book of Psalms",
+		"alt": "Psalms"
+	},
+	{
+		"title": "The Proverbs",
+		"alt": "Proverbs"
+	},
+	{
+		"title": "Ecclesiastes",
+		"alt": "Ecclesiastes"
+	},
+	{
+		"title": "The Song of Solomon",
+		"alt": "Song of Solomon"
+	},
+	{
+		"title": "The Book of the Prophet Isaiah",
+		"alt": "Isaiah"
+	},
+	{
+		"title": "The Book of the Prophet Jeremiah",
+		"alt": "Jeremiah"
+	},
+	{
+		"title": "The Lamentations of Jeremiah",
+		"alt": "Lamentations"
+	},
+	{
+		"title": "The Book of the Prophet Ezekiel",
+		"alt": "Ezekiel"
+	},
+	{
+		"title": "The Book of Daniel",
+		"alt": "Daniel"
+	},
+	{
+		"title": "Hosea",
+		"alt": "Hosea"
+	},
+	{
+		"title": "Joel",
+		"alt": "Joel"
+	},
+	{
+		"title": "Amos",
+		"alt": "Amos"
+	},
+	{
+		"title": "Obadiah",
+		"alt": "Obadiah"
+	},
+	{
+		"title": "Jonah",
+		"alt": "Jonah"
+	},
+	{
+		"title": "Micah",
+		"alt": "Micah"
+	},
+	{
+		"title": "Nahum",
+		"alt": "Nahum"
+	},
+	{
+		"title": "Habakkuk",
+		"alt": "Habakkuk"
+	},
+	{
+		"title": "Zephaniah",
+		"alt": "Zephaniah"
+	},
+	{
+		"title": "Haggai",
+		"alt": "Haggai"
+	},
+	{
+		"title": "Zechariah",
+		"alt": "Zechariah"
+	},
+	{
+		"title": "Malachi",
+		"alt": "Malachi"
+	}
+]
