@@ -9,23 +9,18 @@ import (
 	"os"
 	"time"
 
+	"github.com/cesoun/kjv-bible-api/handlers"
 	"github.com/cesoun/kjv-bible-api/models"
 	"github.com/gorilla/mux"
-	"github.com/tidwall/gjson"
 )
-
-type BookData struct {
-	rawJson string
-	version string
-}
 
 type App struct {
 	Router  *mux.Router
 	Server  *http.Server
 	addr    string
 	port    string
-	newTest *BookData
-	oldTest *BookData
+	newTest *models.BookData
+	oldTest *models.BookData
 }
 
 func (a *App) Init(addr, port string) {
@@ -67,52 +62,20 @@ func (a *App) getBase(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) getRandomVerse(w http.ResponseWriter, r *http.Request) {
-	// type result struct {}
-
 	// seed random and pick a version.
 	rand.Seed(time.Now().UnixNano())
 	rng := rand.Intn(2)
 
-	var version *BookData
+	var verse models.RandomVerse
 
 	// Determine which testament to take from.
 	if rng == 0 {
-		version = a.oldTest
+		verse = handlers.GetRandomVerse(a.oldTest)
 	} else {
-		version = a.newTest
+		verse = handlers.GetRandomVerse(a.newTest)
 	}
 
-	// Get the number of books in version & pick a random one.
-	books := gjson.Get(version.rawJson, `books.#`)
-	book := rand.Intn(int(books.Int()))
-
-	// Get the json for random book
-	bookJson := gjson.Get(version.rawJson, fmt.Sprintf("books.%d", book))
-
-	// Get title & alt title
-	title := gjson.Get(bookJson.Raw, "title")
-	alt := gjson.Get(bookJson.Raw, "alt")
-
-	// Pick random Chatper
-	chapters := gjson.Get(bookJson.Raw, "chapters.#")
-	chapter := rand.Intn(int(chapters.Int()))
-
-	// Pick a random verse.
-	verses := gjson.Get(bookJson.Raw, fmt.Sprintf("chapters.%d.verses.#", chapter))
-	verse := rand.Intn(int(verses.Int()))
-
-	randVerse := gjson.Get(bookJson.Raw, fmt.Sprintf("chapters.%d.verses.%d", chapter, verse))
-
-	respondWithJSON(w, http.StatusOK, models.RandomVerse{
-		Version: *&version.version,
-		Book: models.NestedBook{
-			Title:   title.Str,
-			Alt:     alt.Str,
-			Chapter: chapter + 1,
-			Verse:   verse + 1,
-		},
-		Verse: randVerse.Str,
-	})
+	respondWithJSON(w, http.StatusOK, verse)
 }
 
 func (a *App) loadJson() {
@@ -124,9 +87,9 @@ func (a *App) loadJson() {
 	}
 
 	// Setup and assign the data.
-	newData := &BookData{
-		rawJson: string(r),
-		version: "The New Testament of the King James Bible",
+	newData := &models.BookData{
+		Json:    string(r),
+		Version: "The New Testament of the King James Bible",
 	}
 	a.newTest = newData
 
@@ -138,20 +101,17 @@ func (a *App) loadJson() {
 	}
 
 	// Setup and assign the data.
-	oldData := &BookData{
-		rawJson: string(r),
-		version: "The Old Testament of the King James Version of the Bible",
+	oldData := &models.BookData{
+		Json:    string(r),
+		Version: "The Old Testament of the King James Version of the Bible",
 	}
 	a.oldTest = oldData
 }
 
 func (a *App) initRoutes() {
-	// TODO: Might breakout handlers to shrink this file down.
-
-	// /
 	a.Router.HandleFunc("/", a.getBase).Methods("GET")
 
-	// /api
 	api := a.Router.PathPrefix("/api").Subrouter()
+	api.HandleFunc("/", a.getBase).Methods("GET")
 	api.HandleFunc("/random", a.getRandomVerse).Methods("GET")
 }
