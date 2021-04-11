@@ -10,17 +10,17 @@ I'm fairly confident the text is parsed properly to json but if it isn't then ju
 {
 	"titles": [
 		{
-			"title": string,
-			"alt": string
+			"title": "string",
+			"alt": "string"
 		}
 	],
 	"books": [
 		{
-			"title": string,
-			"alt": string,
+			"title": "string",
+			"alt": "string",
 			"chapters": {
 				"chapter#": {
-					"verse#": string
+					"verse#": "string"
 				}
 			}
 		}
