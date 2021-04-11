@@ -1,0 +1,12 @@
+# golang ignore
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+tmp/
+
+# Parsed data.
+data/
