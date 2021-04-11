@@ -101,6 +101,27 @@ function parseChaptersAndVerses(rawBooks, titles) {
 		output.books.push(book);
 	}
 
+	// Simplify the formatting.
+	for (const i in output.books) {
+		const chapters = output.books[i].chapters;
+		let formattedChapters = [];
+
+		for (const key of Object.keys(chapters)) {
+			const chapter = {
+				chapter: key,
+				verses: [],
+			};
+
+			for (const verse in chapters[key]) {
+				chapter.verses.push(chapters[key][verse]);
+			}
+
+			formattedChapters.push(chapter);
+		}
+
+		output.books[i].chapters = formattedChapters;
+	}
+
 	return output;
 }
 
