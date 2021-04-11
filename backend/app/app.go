@@ -44,40 +44,6 @@ func (a *App) Run() {
 	log.Fatal(a.Server.ListenAndServe())
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	response, err := json.Marshal(payload)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(response)
-}
-
-func (a *App) getBase(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-}
-
-func (a *App) getRandomVerse(w http.ResponseWriter, r *http.Request) {
-	// seed random and pick a version.
-	rand.Seed(time.Now().UnixNano())
-	rng := rand.Intn(2)
-
-	var verse models.RandomVerse
-
-	// Determine which testament to take from.
-	if rng == 0 {
-		verse = handlers.GetRandomVerse(a.oldTest)
-	} else {
-		verse = handlers.GetRandomVerse(a.newTest)
-	}
-
-	respondWithJSON(w, http.StatusOK, verse)
-}
-
 func (a *App) loadJson() {
 	// Load the New Testament JSON
 	r, err := os.ReadFile("../data/kjv-new-min.json")
@@ -114,4 +80,61 @@ func (a *App) initRoutes() {
 	api := a.Router.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/", a.getBase).Methods("GET")
 	api.HandleFunc("/random", a.getRandomVerse).Methods("GET")
+
+	// TODO: Caching/Storing these results would be ideal. They aren't going to change unless we change the data.
+	api.HandleFunc("/firstoccur/{word:[a-zA-Z]+}", a.getFirstOccurrence).Methods("GET")
+}
+
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	response, err := json.Marshal(payload)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(response)
+}
+
+func (a *App) getBase(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (a *App) getRandomVerse(w http.ResponseWriter, r *http.Request) {
+	// seed random and pick a version.
+	rand.Seed(time.Now().UnixNano())
+	rng := rand.Intn(2)
+
+	var verse models.RandomVerse
+
+	// Determine which testament to take from.
+	if rng == 0 {
+		verse = handlers.GetRandomVerse(a.oldTest)
+	} else {
+		verse = handlers.GetRandomVerse(a.newTest)
+	}
+
+	respondWithJSON(w, http.StatusOK, verse)
+}
+
+func (a *App) getFirstOccurrence(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	word := params["word"]
+
+	payload := models.FirstOccurrence{}
+
+	// Get the old testament first occurrence.
+	payload.OldBook = handlers.GetFirstWordOccurrence(a.oldTest, word)
+	payload.NewBook = handlers.GetFirstWordOccurrence(a.newTest, word)
+
+	// If we don't have results for either, just 204 no content.
+	if payload.OldBook == nil && payload.NewBook == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	// Return the object with first occurrence.
+	respondWithJSON(w, http.StatusOK, payload)
 }

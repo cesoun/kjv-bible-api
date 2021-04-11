@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/cesoun/kjv-bible-api/models"
@@ -44,4 +45,42 @@ func GetRandomVerse(data *models.BookData) models.RandomVerse {
 		},
 		Verse: randVerse.Str,
 	}
+}
+
+func GetFirstWordOccurrence(data *models.BookData, word string) *models.NestedBook {
+	// Get the books.
+	books := gjson.Get(data.Json, `books`)
+	for _, book := range books.Array() {
+		// Store title & alt
+		title := gjson.Get(book.Raw, `title`)
+		alt := gjson.Get(book.Raw, `alt`)
+
+		// Get the chapters.
+		chapters := gjson.Get(book.Raw, `chapters`)
+		for _, chapter := range chapters.Array() {
+			// Store chapter #
+			c := gjson.Get(chapter.Raw, `chapter`)
+
+			// Get the verses.
+			verses := gjson.Get(chapter.Raw, `verses`)
+			for v, verse := range verses.Array() {
+				// See if the verse contains the word.
+				words := strings.Fields(strings.ToLower(verse.Str))
+				for _, w := range words {
+					// Found a match? return struct.
+					if word == w {
+						return &models.NestedBook{
+							Title:   title.Str,
+							Alt:     alt.Str,
+							Chapter: int(c.Int()),
+							Verse:   v + 1,
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Didn't find anything, nil.
+	return nil
 }
