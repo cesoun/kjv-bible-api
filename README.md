@@ -4,25 +4,32 @@ This is a project for CST-235. I really didn't want to do this in Java, so I did
 
 I'm fairly confident the text is parsed properly to json but if it isn't then just shoot a PR in or something. Hopefully nothing is missing though.
 
+## Data Parsing Preface
+
+All parsing was done on a Mac and I know that it doesn't parse properly on a Windows system. There seems to also be an issue with it finding the folder called `data` which you can create yourself before running `book-parser.js` in the root of the project. 
+
+With that said, fixing this is not a priority as of right now & I'd recommend you parse the text through some unix system which should produce expected results until I get around to fixing it.
+
 ## Data Format
 
-```json
+```
 {
 	"titles": [
 		{
-			"title": "string",
-			"alt": "string"
+			"title": string,
+			"alt": string
 		}
 	],
 	"books": [
 		{
-			"title": "string",
-			"alt": "string",
-			"chapters": {
-				"chapter#": {
-					"verse#": "string"
+			"title": string,
+			"alt": string,
+			"chapters": [
+				{
+					"chapter": int
+					"verses": [string]
 				}
-			}
+			]
 		}
 	]
 }
