@@ -3,7 +3,7 @@ package handlers
 import (
 	"fmt"
 	"math/rand"
-	"strings"
+	"regexp"
 	"time"
 
 	"github.com/cesoun/kjv-bible-api/models"
@@ -48,6 +48,9 @@ func GetRandomVerse(data *models.BookData) models.RandomVerse {
 }
 
 func GetFirstWordOccurrence(data *models.BookData, word string) *models.NestedBook {
+	// Match a whole word and regex is nicer for this.
+	re := regexp.MustCompile(fmt.Sprintf(`(\b%s\b)`, word))
+
 	// Get the books.
 	books := gjson.Get(data.Json, `books`)
 	for _, book := range books.Array() {
@@ -64,17 +67,14 @@ func GetFirstWordOccurrence(data *models.BookData, word string) *models.NestedBo
 			// Get the verses.
 			verses := gjson.Get(chapter.Raw, `verses`)
 			for v, verse := range verses.Array() {
-				// See if the verse contains the word.
-				words := strings.Fields(strings.ToLower(verse.Str))
-				for _, w := range words {
-					// Found a match? return struct.
-					if word == w {
-						return &models.NestedBook{
-							Title:   title.Str,
-							Alt:     alt.Str,
-							Chapter: int(c.Int()),
-							Verse:   v + 1,
-						}
+
+				// Regular expression matching is probably better here.
+				if re.MatchString(verse.Str) {
+					return &models.NestedBook{
+						Title:   title.Str,
+						Alt:     alt.Str,
+						Chapter: int(c.Int()),
+						Verse:   v + 1,
 					}
 				}
 			}
