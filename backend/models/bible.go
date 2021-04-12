@@ -11,7 +11,7 @@ type NestedBook struct {
 	Verse   int    `json:"verse"`
 }
 
-type RandomVerse struct {
+type BibleVerse struct {
 	Version string     `json:"version"`
 	Book    NestedBook `json:"book"`
 	Verse   string     `json:"verse"`

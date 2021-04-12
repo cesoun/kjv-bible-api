@@ -7,6 +7,8 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cesoun/kjv-bible-api/handlers"
@@ -25,6 +27,7 @@ type App struct {
 
 func (a *App) Init(addr, port string) {
 	a.Router = mux.NewRouter()
+	a.Router.StrictSlash(true)
 
 	a.addr = addr
 	a.port = port
@@ -80,9 +83,14 @@ func (a *App) initRoutes() {
 	api := a.Router.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/", a.getBase).Methods("GET")
 	api.HandleFunc("/random", a.getRandomVerse).Methods("GET")
-
 	// TODO: Caching/Storing these results would be ideal. They aren't going to change unless we change the data.
 	api.HandleFunc("/firstoccur/{word:[a-zA-Z]+}", a.getFirstOccurrence).Methods("GET")
+
+	oldTest := api.PathPrefix("/old").Subrouter()
+	oldTest.HandleFunc("/verse/{book:[a-zA-Z \\d]+}/{chapter:[\\d]+}/{verse:[\\d]+}", a.getVerse).Methods("GET")
+
+	newTest := api.PathPrefix("/new").Subrouter()
+	newTest.HandleFunc("/verse/{book:[a-zA-Z \\d]+}/{chapter:[\\d]+}/{verse:[\\d]+}", a.getVerse).Methods("GET")
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
@@ -107,7 +115,7 @@ func (a *App) getRandomVerse(w http.ResponseWriter, r *http.Request) {
 	rand.Seed(time.Now().UnixNano())
 	rng := rand.Intn(2)
 
-	var verse models.RandomVerse
+	var verse models.BibleVerse
 
 	// Determine which testament to take from.
 	if rng == 0 {
@@ -136,5 +144,47 @@ func (a *App) getFirstOccurrence(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return the object with first occurrence.
+	respondWithJSON(w, http.StatusOK, payload)
+}
+
+func (a *App) getVerse(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	path := r.URL.Path
+
+	// Collect params
+	book := params["book"]
+	chapter := params["chapter"]
+	verse := params["verse"]
+
+	// Validate chapter
+	c, err := strconv.Atoi(chapter)
+	if err != nil {
+		respondWithJSON(w, http.StatusBadRequest, models.ErrorMessage{Error: "Failed to parse chapter."})
+		return
+	}
+
+	// Validate verse
+	v, err := strconv.Atoi(verse)
+	if err != nil {
+		respondWithJSON(w, http.StatusBadRequest, models.ErrorMessage{Error: "Failed to parse verse."})
+		return
+	}
+
+	var payload *models.BibleVerse
+
+	// Determine what book to look in.
+	if strings.Contains(path, "/old/") {
+		payload, err = handlers.GetVerse(a.oldTest, book, c, v)
+	} else {
+		payload, err = handlers.GetVerse(a.newTest, book, c, v)
+	}
+
+	// Respond with error if !nil
+	if err != nil {
+		respondWithJSON(w, http.StatusBadRequest, models.ErrorMessage{Error: err.Error()})
+		return
+	}
+
+	// Respond with payload otherwise.
 	respondWithJSON(w, http.StatusOK, payload)
 }
