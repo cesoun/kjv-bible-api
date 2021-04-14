@@ -85,6 +85,7 @@ func (a *App) initRoutes() {
 	api.HandleFunc("/random", a.getRandomVerse).Methods("GET")
 	// TODO: Caching/Storing these results would be ideal. They aren't going to change unless we change the data.
 	api.HandleFunc("/firstoccur/{word:[a-zA-Z]+}", a.getFirstOccurrence).Methods("GET")
+	api.HandleFunc("/totaloccur/{word:[a-zA-Z]+}", a.getTotalOccurrence).Methods("GET")
 
 	oldTest := api.PathPrefix("/old").Subrouter()
 	oldTest.HandleFunc("/verse/{book:[a-zA-Z \\d]+}/{chapter:[\\d]+}/{verse:[\\d]+}", a.getVerse).Methods("GET")
@@ -133,7 +134,7 @@ func (a *App) getFirstOccurrence(w http.ResponseWriter, r *http.Request) {
 
 	payload := models.FirstOccurrence{}
 
-	// Get the old testament first occurrence.
+	// Get the old & new testament first occurrence.
 	payload.OldBook = handlers.GetFirstWordOccurrence(a.oldTest, word)
 	payload.NewBook = handlers.GetFirstWordOccurrence(a.newTest, word)
 
@@ -144,6 +145,33 @@ func (a *App) getFirstOccurrence(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return the object with first occurrence.
+	respondWithJSON(w, http.StatusOK, payload)
+}
+
+func (a *App) getTotalOccurrence(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	word := params["word"]
+
+	payload := models.TotalOccurrence{}
+
+	// Get the old & new testament total occurrence.
+	payload.OldBook = handlers.GetWordTotalOccurrence(a.oldTest, word)
+	payload.NewBook = handlers.GetWordTotalOccurrence(a.newTest, word)
+
+	// No payload, 204.
+	if payload.OldBook == nil && payload.NewBook == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	// Both payloads? Add a combined field.
+	if payload.OldBook != nil && payload.NewBook != nil {
+		payload.Both = &models.WordCount{
+			Count: payload.OldBook.Count + payload.NewBook.Count,
+			Word:  word,
+		}
+	}
+
 	respondWithJSON(w, http.StatusOK, payload)
 }
 

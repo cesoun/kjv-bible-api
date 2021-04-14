@@ -51,7 +51,7 @@ func GetRandomVerse(data *models.BookData) models.BibleVerse {
 
 func GetFirstWordOccurrence(data *models.BookData, word string) *models.NestedBook {
 	// Match a whole word and regex is nicer for this.
-	re := regexp.MustCompile(fmt.Sprintf(`(\b%s\b)`, word))
+	re := regexp.MustCompile(fmt.Sprintf(`(?i)(\b%s\b)`, word))
 
 	// Get the books.
 	books := gjson.Get(data.Json, `books`)
@@ -85,6 +85,45 @@ func GetFirstWordOccurrence(data *models.BookData, word string) *models.NestedBo
 
 	// Didn't find anything, nil.
 	return nil
+}
+
+func GetWordTotalOccurrence(data *models.BookData, word string) *models.WordCount {
+	wordCount := &models.WordCount{
+		Count: 0,
+		Word:  word,
+	}
+
+	// Match whole word.
+	re := regexp.MustCompile(fmt.Sprintf(`(?i)(\b%s\b)`, word))
+
+	// Loop through all the books.
+	books := gjson.Get(data.Json, `books`)
+	for _, book := range books.Array() {
+
+		// Loop through all the chapters.
+		chapters := gjson.Get(book.Raw, `chapters`)
+		for _, chapter := range chapters.Array() {
+
+			// Loop through all the verses.
+			verses := gjson.Get(chapter.Raw, `verses`)
+			for _, verse := range verses.Array() {
+
+				// Check for matches and add them to our count if we find any.
+				matches := re.FindAllStringIndex(verse.Str, -1)
+				if matches != nil {
+					wordCount.Count += len(matches)
+				}
+			}
+		}
+	}
+
+	// If we found none, return nil.
+	if wordCount.Count == 0 {
+		return nil
+	}
+
+	// Otherwise return the count.
+	return wordCount
 }
 
 func GetVerse(data *models.BookData, book string, chapter int, verse int) (*models.BibleVerse, error) {

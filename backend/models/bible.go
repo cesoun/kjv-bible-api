@@ -21,3 +21,14 @@ type FirstOccurrence struct {
 	OldBook *NestedBook `json:"old,omitempty"`
 	NewBook *NestedBook `json:"new,omitempty"`
 }
+
+type WordCount struct {
+	Word  string `json:"word"`
+	Count int    `json:"count"`
+}
+
+type TotalOccurrence struct {
+	OldBook *WordCount `json:"old,omitempty"`
+	NewBook *WordCount `json:"new,omitempty"`
+	Both    *WordCount `json:"both,omitempty"`
+}
