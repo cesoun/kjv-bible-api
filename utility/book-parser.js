@@ -5,6 +5,8 @@ function getRawText(fileName) {
 	// File contents.
 	let raw = fs.readFileSync(path.join(__dirname, fileName + '.txt'), 'utf8');
 
+	raw = raw.replace(/(\r\n)/g, '\n');
+
 	// Otherwise/Commonly Called: replacement.
 	raw = raw.replace(/(\n.*Called:\n{2,}.*)/g, '');
 
@@ -128,8 +130,14 @@ function parseChaptersAndVerses(rawBooks, titles) {
 function writeJSON(obj, titles, file, min = false) {
 	let json = JSON.stringify({ titles, ...obj }, null, min ? 0 : 4);
 	let filename = min ? `${file}-min.json` : `${file}.json`;
+	let dataDir = path.join(__dirname, '../data');
 
-	fs.writeFileSync(path.join(__dirname, '../data', `${filename}`), json);
+	// Create directory if it doesn't exist.
+	if (!fs.existsSync(dataDir)) {
+		fs.mkdirSync(dataDir);
+	}
+
+	fs.writeFileSync(path.join(dataDir, `${filename}`), json);
 	console.log(`${filename} written.`);
 }
 
