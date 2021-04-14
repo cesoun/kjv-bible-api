@@ -1,19 +1,37 @@
 const fs = require('fs');
 const path = require('path');
 
+// https://stackoverflow.com/questions/34820267/detecting-type-of-line-breaks
+function getLineBreakChar(string) {
+	const indexOfLF = string.indexOf('\n', 1); // No need to check first-character
+
+	if (indexOfLF === -1) {
+		if (string.indexOf('\r') !== -1) return '\r';
+
+		return '\n';
+	}
+
+	if (string[indexOfLF - 1] === '\r') return '\r\n';
+
+	return '\n';
+}
+
 function getRawText(fileName) {
 	// File contents.
 	let raw = fs.readFileSync(path.join(__dirname, fileName + '.txt'), 'utf8');
+	let char = getLineBreakChar(raw);
 
 	// Otherwise/Commonly Called: replacement.
-	raw = raw.replace(/(\n.*Called:\n{2,}.*)/g, '');
+	raw = raw.replace(new RegExp(`${char}.*Called:${char}{2,}.*`, 'g'), '');
 
 	// Condensing lines downs nicely.
-	raw = raw.replace(/\n{3,}/g, '\n');
-	raw = raw.replace(/\n{2,}/g, '\n');
+	raw = raw.replace(new RegExp(`${char}{3,}`, 'g'), char);
+	raw = raw.replace(new RegExp(`${char}{2,}`, 'g'), char);
 
 	// Replace double spaces. Idk why these are in here.
 	raw = raw.replace(/ {2,}/g, ' ');
+
+	fs.writeFileSync('1testing.txt', raw);
 
 	// Titles for parsing.
 	let titles = JSON.parse(
@@ -24,7 +42,7 @@ function getRawText(fileName) {
 }
 
 function getRawArray(rawData) {
-	return rawData.split('\n');
+	return rawData.split(getLineBreakChar(rawData));
 }
 
 function collapseLines(rawArr, titles) {
@@ -128,8 +146,14 @@ function parseChaptersAndVerses(rawBooks, titles) {
 function writeJSON(obj, titles, file, min = false) {
 	let json = JSON.stringify({ titles, ...obj }, null, min ? 0 : 4);
 	let filename = min ? `${file}-min.json` : `${file}.json`;
+	let dataDir = path.join(__dirname, '../data');
 
-	fs.writeFileSync(path.join(__dirname, '../data', `${filename}`), json);
+	// Create directory if it doesn't exist.
+	if (!fs.existsSync(dataDir)) {
+		fs.mkdirSync(dataDir);
+	}
+
+	fs.writeFileSync(path.join(dataDir, `${filename}`), json);
 	console.log(`${filename} written.`);
 }
 
@@ -137,6 +161,8 @@ function parseBooks(files) {
 	for (const file of files) {
 		let [raw, titles] = getRawText(file);
 		let rawArr = getRawArray(raw);
+
+		fs.writeFileSync('testing.txt', rawArr);
 		let rawBooks = collapseLines(rawArr, titles);
 		let output = parseChaptersAndVerses(rawBooks, titles);
 
