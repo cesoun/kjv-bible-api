@@ -35,6 +35,8 @@ func (a *App) Init(addr, port string) {
 	a.loadJson()
 	a.initRoutes()
 
+	a.Router.Use(corsAllowAccess)
+
 	a.Server = &http.Server{
 		Handler:      a.Router,
 		Addr:         fmt.Sprintf("%s:%s", addr, port),
@@ -92,6 +94,13 @@ func (a *App) initRoutes() {
 
 	newTest := api.PathPrefix("/new").Subrouter()
 	newTest.HandleFunc("/verse/{book:[a-zA-Z \\d]+}/{chapter:[\\d]+}/{verse:[\\d]+}", a.getVerse).Methods("GET")
+}
+
+func corsAllowAccess(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		next.ServeHTTP(w, r)
+	})
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
