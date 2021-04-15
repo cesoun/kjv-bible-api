@@ -1,0 +1,215 @@
+openapi: 3.0.0
+info:
+  title: "King James Bible API"
+  description: "King James Bible API endpoints. Source on [GitHub](https://github.com/cesoun/kjv-bible-api)."
+  version: "1.0.0"
+  license:
+    name: "MIT"
+    url: "https://github.com/cesoun/kjv-bible-api/blob/master/LICENSE"
+    
+servers:
+  - url: "http://kjb.heckin.dev/api"
+    description: "No SSL"
+  - url: "https://kjb.heckin.dev/api"
+    description: "SSL"
+
+tags:
+- name: "shared"
+  description: "Applies to both the Old & New Testament."
+- name: "old"
+  description: "Everything related to the Old Testament."
+- name: "new"
+  description: "Everything related to the New Testament."
+
+paths:
+  /random:
+    get:
+      tags:
+      - "shared"
+      summary: "Get a random verse from the old or new testament."
+      responses:
+        "200":
+          description: "A random bible verse"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BibleVerse"
+            
+  /firstoccur/{word}:
+    get:
+      tags:
+      - "shared"
+      summary: "Get the first occurrence of a word in old & new testament."
+      parameters:
+        - name: word
+          in: "path"
+          required: true
+          description: "The word to search for"
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "The word was found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FirstOccurrence"
+        "204":
+          description: "The word was not found anywhere."
+  
+  /totaloccur/{word}:
+      get:
+        tags:
+        - "shared"
+        summary: "Get the total occurrences of a word in old & new testament."
+        parameters:
+          - name: word
+            in: "path"
+            required: true
+            description: "The word to search for"
+            schema:
+              type: "string"
+        responses:
+          "200":
+            description: "The word was found and counted."
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/TotalOccurrence"
+          "204":
+            description: "The word was not found anywhere."
+            
+  /old/verse/{book}/{chapter}/{verse}:
+    get:
+      tags:
+      - "old"
+      summary: "Get a specific verse from given book, chapter and verse number."
+      parameters:
+        - name: book
+          in: "path"
+          required: true
+          description: "the book title: eg. genesis"
+          schema:
+            type: "string"
+        - name: chapter
+          in: "path"
+          required: true
+          description: "The chapter number"
+          schema:
+            type: "integer"
+        - name: verse
+          in: "path"
+          required: true
+          description: "The verse number"
+          schema:
+            type: "integer"
+      responses:
+        "200":
+          description: "The verse was found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BibleVerse"
+        "400":
+          description: "The verse was not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"
+
+  /new/verse/{book}/{chapter}/{verse}:
+    get:
+      tags:
+      - "new"
+      summary: "Get a specific verse from given book, chapter and verse number."
+      parameters:
+        - name: book
+          in: "path"
+          required: true
+          description: "the book title: eg. 1 john"
+          schema:
+            type: "string"
+        - name: chapter
+          in: "path"
+          required: true
+          description: "The chapter number"
+          schema:
+            type: "integer"
+        - name: verse
+          in: "path"
+          required: true
+          description: "The verse number"
+          schema:
+            type: "integer"
+      responses:
+        "200":
+          description: "The verse was found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BibleVerse"
+        "400":
+          description: "The verse was not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"
+          
+components:
+  schemas:
+    BibleVerse:
+      type: "object"
+      properties:
+        version:
+          type: "string"
+        book:
+          $ref: "#/components/schemas/NestedBook"
+        verse:
+          type: "string"
+          
+    FirstOccurrence:
+      type: "object"
+      properties:
+        old:
+          $ref: "#/components/schemas/NestedBook"
+        new:
+          $ref: "#/components/schemas/NestedBook"
+          
+    TotalOccurrence:
+      type: "object"
+      properties:
+        old:
+          $ref: "#/components/schemas/WordCount"
+        new:
+          $ref: "#/components/schemas/WordCount"
+        both:
+          type: "integer"
+          nullable: true
+          
+    NestedBook:
+      type: "object"
+      nullable: true
+      properties:
+        title:
+          type: "string"
+        alt:
+          type: "string"
+        chapter:
+          type: "integer"
+        verse:
+          type: "integer"
+          
+    WordCount:
+      type: "object"
+      nullable: true
+      properties:
+        word:
+          type: "string"
+        count:
+          type: "integer"
+          
+    BadRequest:
+      type: "object"
+      properties:
+        error:
+          type: "string"

@@ -4,6 +4,20 @@ This is a project for CST-235. I really didn't want to do this in Java, so I did
 
 I'm fairly confident the text is parsed properly to json but if it isn't then just shoot a PR in or something. Hopefully nothing is missing though.
 
+## Swagger / OpenAPI
+
+Open `openapi.yaml` in your favorite tool(s) such as [Insomnia](https://insomnia.rest) or the [Swagger Online Editor](https://editor.swagger.io) to see and try out all the endpoints.
+
+If the service is down _(because I stopped hosting it)_ change the servers section to your own servers or local instance. You might need to put some extra work in for https support in your local instance.
+
+```yaml
+servers:
+    - url: 'http://localhost:8080/api'
+      description: 'No SSL'
+    # - url: 'https://kjb.heckin.dev/api'
+    #   description: 'SSL'
+```
+
 ## Data Format
 
 ```
