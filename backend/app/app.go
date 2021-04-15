@@ -49,7 +49,7 @@ func (a *App) Run() {
 
 func (a *App) loadJson() {
 	// Load the New Testament JSON
-	r, err := os.ReadFile("../data/kjv-new-min.json")
+	r, err := os.ReadFile("./data/kjv-new-min.json")
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -63,7 +63,7 @@ func (a *App) loadJson() {
 	a.newTest = newData
 
 	// Load the Old Testament JSON
-	r, err = os.ReadFile("../data/kjv-old-min.json")
+	r, err = os.ReadFile("./data/kjv-old-min.json")
 	if err != nil {
 		log.Fatal(err)
 		return
