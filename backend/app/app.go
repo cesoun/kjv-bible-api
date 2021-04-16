@@ -21,16 +21,18 @@ type App struct {
 	Server  *http.Server
 	addr    string
 	port    string
+	domain  string
 	newTest *models.BookData
 	oldTest *models.BookData
 }
 
-func (a *App) Init(addr, port string) {
+func (a *App) Init(addr, port, domain string) {
 	a.Router = mux.NewRouter()
 	a.Router.StrictSlash(true)
 
 	a.addr = addr
 	a.port = port
+	a.domain = domain
 
 	a.loadJson()
 	a.initRoutes()
@@ -116,6 +118,24 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
+func generateVerseUrlForBook(b *models.NestedBook, domain string, isOld bool) {
+	// Return if nil.
+	if b == nil {
+		return
+	}
+
+	// Setup base_uri from app.domain & set verse url from NestedBook data.
+	base_uri := fmt.Sprintf("%s/api", domain)
+	if isOld {
+		b.VerseUrl = fmt.Sprintf("%s/old/verse/%s/%d/%d/", base_uri, b.Alt, b.Chapter, b.Verse)
+	} else {
+		b.VerseUrl = fmt.Sprintf("%s/new/verse/%s/%d/%d/", base_uri, b.Alt, b.Chapter, b.Verse)
+	}
+
+	// url encode any spaces.
+	b.VerseUrl = strings.ReplaceAll(b.VerseUrl, " ", "%20")
+}
+
 func (a *App) getBase(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
@@ -130,8 +150,10 @@ func (a *App) getRandomVerse(w http.ResponseWriter, r *http.Request) {
 	// Determine which testament to take from.
 	if rng == 0 {
 		verse = handlers.GetRandomVerse(a.oldTest)
+		generateVerseUrlForBook(&verse.Book, a.domain, true)
 	} else {
 		verse = handlers.GetRandomVerse(a.newTest)
+		generateVerseUrlForBook(&verse.Book, a.domain, false)
 	}
 
 	respondWithJSON(w, http.StatusOK, verse)
@@ -152,6 +174,9 @@ func (a *App) getFirstOccurrence(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
+
+	generateVerseUrlForBook(payload.OldBook, a.domain, true)
+	generateVerseUrlForBook(payload.NewBook, a.domain, false)
 
 	// Return the object with first occurrence.
 	respondWithJSON(w, http.StatusOK, payload)
@@ -212,8 +237,16 @@ func (a *App) getVerse(w http.ResponseWriter, r *http.Request) {
 	// Determine what book to look in.
 	if strings.Contains(path, "/old/") {
 		payload, err = handlers.GetVerse(a.oldTest, book, c, v)
+
+		if payload != nil {
+			generateVerseUrlForBook(&payload.Book, a.domain, true)
+		}
 	} else {
 		payload, err = handlers.GetVerse(a.newTest, book, c, v)
+
+		if payload != nil {
+			generateVerseUrlForBook(&payload.Book, a.domain, false)
+		}
 	}
 
 	// Respond with error if !nil

@@ -5,10 +5,11 @@ type ErrorMessage struct {
 }
 
 type NestedBook struct {
-	Title   string `json:"title"`
-	Alt     string `json:"alt"`
-	Chapter int    `json:"chapter"`
-	Verse   int    `json:"verse"`
+	Title    string `json:"title"`
+	Alt      string `json:"alt"`
+	Chapter  int    `json:"chapter"`
+	Verse    int    `json:"verse"`
+	VerseUrl string `json:"verse_url,omitempty"`
 }
 
 type BibleVerse struct {
