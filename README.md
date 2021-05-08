@@ -1,7 +1,5 @@
 # kjv-bible-api
 
-This is a project for CST-235. I really didn't want to do this in Java, so I didn't.
-
 I'm fairly confident the text is parsed properly to json but if it isn't then just shoot a PR in or something. Hopefully nothing is missing though.
 
 ## Swagger / OpenAPI
